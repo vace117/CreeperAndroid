@@ -10,7 +10,7 @@ import android.view.WindowManager;
 public class BootstrapActivity extends Activity {
 	
 	private static final int PORT = 8000; 
-	private static final WebSocketServer webSocketServer = new WebSocketServer(PORT);
+	private static WebSocketServer webSocketServer;
 
 
 	@Override
@@ -20,11 +20,13 @@ public class BootstrapActivity extends Activity {
 		
 	    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 		
+	    getAssets();
 		
 		new Thread(new Runnable() {
 	        public void run() {
 	        	try {
 	        		Logger.info("Threaded 1");
+	        		webSocketServer = new WebSocketServer(PORT, BootstrapActivity.this);
 	        		webSocketServer.run();
 				} catch (Exception e) {
 					Logger.error("Badness:", e);

@@ -9,6 +9,14 @@ public class Logger {
 		Log.e(TAG, msg, e);
 	}
 
+	public static synchronized void error(Throwable e) {
+		Log.e(TAG, "Exception:", e);
+	}
+
+	public static synchronized void info(String msg) {
+		Log.i(TAG, doReplacements(msg, new Object[] {}));
+	}
+
 	public static synchronized void info(String msg, Object... replacementArgs) {
 		Log.i(TAG, doReplacements(msg, replacementArgs));
 	}

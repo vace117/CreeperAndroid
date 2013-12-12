@@ -6,7 +6,6 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpMethod.GET;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
-import static io.netty.handler.codec.http.HttpResponseStatus.FORBIDDEN;
 import static io.netty.handler.codec.http.HttpResponseStatus.INTERNAL_SERVER_ERROR;
 import static io.netty.handler.codec.http.HttpResponseStatus.METHOD_NOT_ALLOWED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
@@ -28,15 +27,16 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.CharsetUtil;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.RandomAccessFile;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.net.URLDecoder;
 
 import javax.activation.MimetypesFileTypeMap;
 
 import vace117.creeper.logging.Logger;
+import android.app.Activity;
+import android.content.res.AssetFileDescriptor;
 
 /**
  * Acts as a very simple file server. We use it to send the HTML page to the browser.
@@ -44,11 +44,13 @@ import vace117.creeper.logging.Logger;
  * @author Val Blant
  */
 public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
-	private String defaultFileName;
+	private final String defaultFileName;
+	private final Activity mainActivity;
 
-	public HttpStaticFileServerHandler(String defaultFileName) {
+	public HttpStaticFileServerHandler(String defaultFileName, Activity mainActivity) {
 		super();
 		this.defaultFileName = defaultFileName;
+		this.mainActivity = mainActivity;
 	}
 
 	@Override
@@ -74,52 +76,44 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 			} 
 
 			Logger.info("Processing request for {}...", uri);
-			URL fileURL = sanitizeUri(uri);
-			if (fileURL == null) {
-				sendError(ctx, NOT_FOUND, uri);
-				return;
-			}
-
-			File file = new File(fileURL.getFile());
-			if (file.isHidden() || !file.exists()) {
-				sendError(ctx, NOT_FOUND, uri);
-				return;
-			}
-
-			if (!file.isFile()) {
-				sendError(ctx, FORBIDDEN, uri);
-				return;
-			}
-			
-			Logger.info("Transmitting {}...", uri);
-
-			RandomAccessFile raf;
+			AssetFileDescriptor fd = null;
 			try {
-				raf = new RandomAccessFile(file, "r");
-			} catch (FileNotFoundException fnfe) {
+				fd = readAsset(uri);
+			} catch (IOException e) {
 				sendError(ctx, NOT_FOUND, uri);
-				return;
+				Logger.error(e);
 			}
-			long fileLength = raf.length();
+		
 
-			HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
-			setContentLength(response, fileLength);
-			setContentTypeHeader(response, file);
-			if (isKeepAlive(request)) {
-				response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+			if ( fd == null ) {
+				sendError(ctx, NOT_FOUND, uri);
 			}
+			else {
+				Logger.info("Transmitting {}...", uri);
+				
+				long fileLength = fd.getLength();
+				FileInputStream fileInputStream = new FileInputStream(fd.getFileDescriptor());
 
-			// Write the initial line and the header.
-			ctx.write(response);
+				HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+				setContentLength(response, fileLength);
+				setContentTypeHeader(response, uri);
+				if (isKeepAlive(request)) {
+					response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+				}
 
-			// Write the content.
-			ctx.write(
-					new DefaultFileRegion(raf.getChannel(), 0, fileLength), 
-					ctx.newProgressivePromise());
+				// Write the initial line and the header.
+				ctx.write(response);
 
-			// Write the end marker
-			ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+				// Write the content.
+				ctx.write(
+						new DefaultFileRegion(fileInputStream.getChannel(), 0, fileLength), 
+						ctx.newProgressivePromise());
 
+				// Write the end marker
+				ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+
+				fileInputStream.close();
+			}
 		}
 
 	}
@@ -132,7 +126,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 		}
 	}
 
-	private URL sanitizeUri(String uri) {
+	private AssetFileDescriptor readAsset(String uri) throws IOException {
 		// Decode the path.
 		try {
 			uri = URLDecoder.decode(uri, "UTF-8");
@@ -150,8 +144,10 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 		if (!uri.startsWith("/web")) {
 			return null; // Disallow anything that is not under /web
 		}
+		
+		uri = uri.substring(1) + ".jpg";
 
-		return this.getClass().getResource(uri);
+		return mainActivity.getAssets().openFd(uri);
 	}
 
 	private static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
@@ -174,10 +170,10 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 	 * 
 	 * @param file file to extract content type from
 	 */
-	private static void setContentTypeHeader(HttpResponse response, File file) {
+	private static void setContentTypeHeader(HttpResponse response, String uri) {
 		MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
-		response.headers().set(CONTENT_TYPE,
-				mimeTypesMap.getContentType(file.getPath()));
+		String mimeType = mimeTypesMap.getContentType(uri);
+		response.headers().set(CONTENT_TYPE, mimeType);
 	}
 
 }

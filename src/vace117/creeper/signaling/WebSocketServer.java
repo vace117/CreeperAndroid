@@ -29,6 +29,7 @@ import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
 import vace117.creeper.logging.Logger;
 import vace117.creeper.webrtc.PeerConnectionManager;
+import android.app.Activity;
 
 /**
  * A WebSocket Server that responds to requests at:
@@ -40,13 +41,15 @@ import vace117.creeper.webrtc.PeerConnectionManager;
  */
 public class WebSocketServer {
     private final int port;
+    private final Activity mainActivity;
     
     private EventLoopGroup bossGroup = new NioEventLoopGroup();
     private EventLoopGroup workerGroup = new NioEventLoopGroup();
 
 
-    public WebSocketServer(int port) {
+    public WebSocketServer(int port, Activity mainActivity) {
         this.port = port;
+        this.mainActivity = mainActivity;
     }
     
     public void run() throws Exception {
@@ -61,7 +64,7 @@ public class WebSocketServer {
                         new HttpRequestDecoder(),
                         new HttpObjectAggregator(65536),
                         new HttpResponseEncoder(),
-                        new HttpStaticFileServerHandler("/web/creeper.html"),
+                        new HttpStaticFileServerHandler("/web/creeper.html", mainActivity),
                         new WebSocketConnectionObserver("/websocket"),
                         new WebSocketMessageHandler());
                 }
