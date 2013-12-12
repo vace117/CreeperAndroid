@@ -11,10 +11,10 @@ import static io.netty.handler.codec.http.HttpResponseStatus.METHOD_NOT_ALLOWED;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
+import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.DefaultFileRegion;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.DefaultHttpResponse;
@@ -27,16 +27,15 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.util.CharsetUtil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
-import javax.activation.MimetypesFileTypeMap;
+import org.apache.commons.io.IOUtils;
 
 import vace117.creeper.logging.Logger;
 import android.app.Activity;
-import android.content.res.AssetFileDescriptor;
 
 /**
  * Acts as a very simple file server. We use it to send the HTML page to the browser.
@@ -76,44 +75,52 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 			} 
 
 			Logger.info("Processing request for {}...", uri);
-			AssetFileDescriptor fd = null;
 			try {
-				fd = readAsset(uri);
+				InputStream assetInputStream = readAsset(uri);
+				
+				if ( assetInputStream == null ) {
+					sendError(ctx, NOT_FOUND, uri);
+				}
+				else {
+					Logger.info("Transmitting {}...", uri);
+					
+					// We have our file as a sequential InputStream (it's being decompressed directly out of the apk - 
+					// the file is never decompressed fully into memory), but what we need to send our response with Netty 
+					// is a ByteBuf. 
+					// So we create a direct buffer ByteBuf, wrap it in OutputStream and use Apache Commons IO to
+					// stream the data into the ByteBuf.
+					//
+					ByteBufOutputStream byteBufOutputStream = new ByteBufOutputStream( Unpooled.directBuffer(assetInputStream.available()) );
+					IOUtils.copy(assetInputStream, byteBufOutputStream);
+					long fileLength = byteBufOutputStream.buffer().readableBytes();
+					
+					// Configure HTTP Header params
+					HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
+					setContentLength(response, fileLength);
+					setContentTypeHeader(response, uri);
+					if (isKeepAlive(request)) {
+						response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+					}
+
+					// Write the initial line and the header.
+					ctx.write(response);
+
+					// Write the body
+					ctx.write(byteBufOutputStream.buffer());
+
+					// Write the end marker
+					ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
+					
+					// Release memory
+					assetInputStream.close();
+					byteBufOutputStream.close();
+				}
 			} catch (IOException e) {
 				sendError(ctx, NOT_FOUND, uri);
 				Logger.error(e);
 			}
 		
 
-			if ( fd == null ) {
-				sendError(ctx, NOT_FOUND, uri);
-			}
-			else {
-				Logger.info("Transmitting {}...", uri);
-				
-				long fileLength = fd.getLength();
-				FileInputStream fileInputStream = new FileInputStream(fd.getFileDescriptor());
-
-				HttpResponse response = new DefaultHttpResponse(HTTP_1_1, OK);
-				setContentLength(response, fileLength);
-				setContentTypeHeader(response, uri);
-				if (isKeepAlive(request)) {
-					response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
-				}
-
-				// Write the initial line and the header.
-				ctx.write(response);
-
-				// Write the content.
-				ctx.write(
-						new DefaultFileRegion(fileInputStream.getChannel(), 0, fileLength), 
-						ctx.newProgressivePromise());
-
-				// Write the end marker
-				ctx.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT);
-
-				fileInputStream.close();
-			}
 		}
 
 	}
@@ -126,7 +133,10 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 		}
 	}
 
-	private AssetFileDescriptor readAsset(String uri) throws IOException {
+	/**
+	 * Presents the requested file from the 'assets' directory as an <code>InputStream</code> 
+	 */
+	private InputStream readAsset(String uri) throws IOException {
 		// Decode the path.
 		try {
 			uri = URLDecoder.decode(uri, "UTF-8");
@@ -145,9 +155,9 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 			return null; // Disallow anything that is not under /web
 		}
 		
-		uri = uri.substring(1) + ".jpg";
+		uri = uri.substring(1); // strip the leading slash
 
-		return mainActivity.getAssets().openFd(uri);
+		return mainActivity.getAssets().open(uri);
 	}
 
 	private static void sendError(ChannelHandlerContext ctx, HttpResponseStatus status) {
@@ -167,13 +177,14 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
 	/**
 	 * Sets the content type header for the HTTP Response
-	 * 
-	 * @param file file to extract content type from
 	 */
-	private static void setContentTypeHeader(HttpResponse response, String uri) {
-		MimetypesFileTypeMap mimeTypesMap = new MimetypesFileTypeMap();
-		String mimeType = mimeTypesMap.getContentType(uri);
+	private void setContentTypeHeader(HttpResponse response, String uri) {
+		String mimeType = MimeTypeRegistry.lookup( getFileExtension(uri) );
 		response.headers().set(CONTENT_TYPE, mimeType);
+	}
+	
+	private String getFileExtension(String path) {
+		return path.substring(path.lastIndexOf(".")+1);
 	}
 
 }
