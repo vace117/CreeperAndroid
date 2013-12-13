@@ -1,5 +1,7 @@
 package vace117.creeper.ui;
 
+import org.webrtc.PeerConnectionFactory;
+
 import vace117.creeper.logging.Logger;
 import vace117.creeper.signaling.WebSocketServer;
 import android.app.Activity;
@@ -17,15 +19,15 @@ public class BootstrapActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_bootstrap);
-		
 	    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-		
-	    getAssets();
-		
+
+		// Check that WebRTC stuff is functional
+	    pokeWebRTC();
+
+	    // Run the WebServer
 		new Thread(new Runnable() {
 	        public void run() {
 	        	try {
-	        		Logger.info("Threaded 1");
 	        		webSocketServer = new WebSocketServer(PORT, BootstrapActivity.this);
 	        		webSocketServer.run();
 				} catch (Exception e) {
@@ -34,15 +36,28 @@ public class BootstrapActivity extends Activity {
 	        }
 	    }).start();
 	}
+	
+	/**
+	 * Registers the VM with the native Video and Voice Engines and pokes libjingle 
+	 * to enumerate the available video and audio codecs. If this succeeds, we can be
+	 * reasonably confident that the system is set up correctly
+	 */
+	private void pokeWebRTC() {
+	    Logger.info("Initializing WebRTC...");
+	    Logger.dieUnless(PeerConnectionFactory.initializeAndroidGlobals(this), "Failed to initializeAndroidGlobals!");
+	    PeerConnectionFactory factory = new PeerConnectionFactory();
+	    factory.dispose();
+	    Logger.info("WebRTC seems to be ready to go!");
+	}
 
 	
-	// TODO: This might never be called, so figure out where to release resources!
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-
-		webSocketServer.shutdown(); 
-	}
+//	// TODO: This might never be called, so figure out where to release resources!
+//	@Override
+//	protected void onDestroy() {
+//		super.onDestroy();
+//
+//		webSocketServer.shutdown(); 
+//	}
 	
 //	  @Override
 //	  public void onPause() {

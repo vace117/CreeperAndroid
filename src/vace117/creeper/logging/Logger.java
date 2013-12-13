@@ -4,7 +4,7 @@ import android.util.Log;
 
 public class Logger {
 	public static final String TAG = "Creeper1";
-			
+
 	public static synchronized void error(String msg, Throwable e) {
 		Log.e(TAG, msg, e);
 	}
@@ -27,14 +27,22 @@ public class Logger {
 
 	private static String doReplacements(String msg, Object... replacementArgs) {
 		String processedString = msg;
-		
-		if ( replacementArgs != null ) {
-			for ( Object arg : replacementArgs ) {
+
+		if (replacementArgs != null) {
+			for (Object arg : replacementArgs) {
 				processedString = processedString.replaceFirst("\\{\\}", arg.toString());
 			}
 		}
-		
+
 		return processedString;
+	}
+
+	public static synchronized void dieUnless(boolean condition, String msg) {
+		if (!condition) {
+			RuntimeException ex = new RuntimeException(msg);
+			Logger.error("I am dyiiiing!", ex);
+			throw ex;
+		}
 	}
 
 }
