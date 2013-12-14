@@ -3,7 +3,7 @@ package vace117.creeper.signaling;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
-import vace117.creeper.logging.Logger;
+import vace117.creeper.logging.CreeperContext;
 import vace117.creeper.webrtc.PeerConnectionManager;
 
 /**
@@ -26,7 +26,7 @@ public class WebSocketConnectionObserver extends WebSocketServerProtocolHandler 
 	
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-		Logger.error("Something went wrong during PeerConnection init!", cause);
+		CreeperContext.getInstance().error("Something went wrong during PeerConnection init!", cause);
 		
 		super.exceptionCaught(ctx, new WebSocketHandshakeException(cause.getMessage()));
 	}

@@ -17,7 +17,7 @@ import org.webrtc.VideoRenderer;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 
-import vace117.creeper.logging.Logger;
+import vace117.creeper.logging.CreeperContext;
 
 public class PeerConnectionManager {
 	
@@ -66,26 +66,26 @@ public class PeerConnectionManager {
 	 * Creates a PeerConnection and adds a Video Track of the webcam to it 
 	 */
 	public void initPeerConnection(){
-		Logger.info("Creating a PeerConnection...");
+		CreeperContext.getInstance().info("Creating a PeerConnection...");
 		factory = new PeerConnectionFactory();
 		pcObserver = new PeerConnectionObserverImpl(webSocketContext);
 		peerConnection = factory.createPeerConnection(
 				new ArrayList<PeerConnection.IceServer>(),
 				new MediaConstraints(), 
 				pcObserver);
-		Logger.info("PeerConnection State: {}", peerConnection.signalingState());
+		CreeperContext.getInstance().info("PeerConnection State: {}", peerConnection.signalingState());
 
 		// Get the video source
 		if ( videoSource == null ) {
-			Logger.info("Obtaining the default VideoSource...");
+			CreeperContext.getInstance().info("Obtaining the default VideoSource...");
 			videoSource = factory.createVideoSource(VideoCapturer.create(""), new MediaConstraints());
 		}
 		else {
-			Logger.info("Re-using VideoSource...");
+			CreeperContext.getInstance().info("Re-using VideoSource...");
 		}
 
 		// Create a MediaStream with one video track
-		Logger.info("Creating a MediaStream...");
+		CreeperContext.getInstance().info("Creating a MediaStream...");
 		MediaStream lMS = factory.createLocalMediaStream("JavaMediaStream");
         VideoTrack videoTrack = factory.createVideoTrack("JavaMediaStream_v0", videoSource);
         videoTrack.addRenderer(new VideoRenderer(new VideoRendererObserverImpl()));
@@ -97,7 +97,7 @@ public class PeerConnectionManager {
 	}
 	
 	public void shutDown() {
-		Logger.info("SHUTDOWN. Cleaning up WebRTC resources...");
+		CreeperContext.getInstance().info("SHUTDOWN. Cleaning up WebRTC resources...");
 		
 		destroyPeerConnection();
 		
@@ -129,14 +129,14 @@ public class PeerConnectionManager {
 		sdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair(
 				"OfferToReceiveVideo", "false"));
 
-		Logger.info("Creating an Offer...");
+		CreeperContext.getInstance().info("Creating an Offer...");
 		// Get the Offer SDP
 		SdpObserverImpl sdpOfferObserver = new SdpObserverImpl();
 		peerConnection.createOffer(sdpOfferObserver, sdpConstraints);
 		SessionDescription offerSdp = sdpOfferObserver.getSdp();
 		
 		// Set local SDP, don't care for any callbacks
-		Logger.info("Setting LocalDescription...");
+		CreeperContext.getInstance().info("Setting LocalDescription...");
 		peerConnection.setLocalDescription(new SdpObserverImpl(), offerSdp);
 
 		// Serialize Offer and send to the Browser via a WebSocket
@@ -147,7 +147,7 @@ public class PeerConnectionManager {
 	 * Called when an SDP Answer arrives via the WebSocket
 	 */
 	public void setRemoteDescription(SessionDescription answer) {
-		Logger.info("Setting Remote Description: {}", answer.description);
+		CreeperContext.getInstance().info("Setting Remote Description: {}", answer.description);
 
 		peerConnection.setRemoteDescription(new SdpObserverImpl(), answer);
 	}
@@ -156,14 +156,14 @@ public class PeerConnectionManager {
 	 * Called when a remote ICE candidate arrives via the WebSocket
 	 */
 	public void addRemoteIceCandidate(IceCandidate candidate) {
-		Logger.info("Adding Remote Ice Candidate: {}", candidate.sdp);
+		CreeperContext.getInstance().info("Adding Remote Ice Candidate: {}", candidate.sdp);
 		
 		peerConnection.addIceCandidate(candidate);
 	}
 	
 	@SuppressWarnings("unchecked")
 	private void sendOfferToBrowser(SessionDescription offerSdp) {
-		Logger.info("Sending Offer SDP:\n{}\n", offerSdp.description);
+		CreeperContext.getInstance().info("Sending Offer SDP:\n{}\n", offerSdp.description);
 		
 		JSONObject offerSdpJson = new JSONObject();
 		offerSdpJson.put("sdp", offerSdp.description);

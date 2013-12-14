@@ -2,17 +2,23 @@ package vace117.creeper.ui;
 
 import org.webrtc.PeerConnectionFactory;
 
-import vace117.creeper.logging.Logger;
+import vace117.creeper.logging.CreeperContext;
 import vace117.creeper.signaling.WebSocketServer;
 import android.app.Activity;
 import android.os.Bundle;
+import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 public class BootstrapActivity extends Activity {
 	
 	private static final int PORT = 8000; 
 	private static WebSocketServer webSocketServer;
+	public TextView logString;
+	private ImageView creeperImgView;
 
 
 	@Override
@@ -20,6 +26,15 @@ public class BootstrapActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_bootstrap);
 	    getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+	    
+	    logString = (TextView) findViewById(R.id.logString);
+	    logString.setMovementMethod(new ScrollingMovementMethod());
+	    
+	    creeperImgView = (ImageView) findViewById(R.id.creeperImg);
+	    creeperImgView.setVisibility(View.INVISIBLE);
+	    
+	    CreeperContext.init(this);
+
 
 		// Check that WebRTC stuff is functional
 	    pokeWebRTC();
@@ -31,23 +46,33 @@ public class BootstrapActivity extends Activity {
 	        		webSocketServer = new WebSocketServer(PORT, BootstrapActivity.this);
 	        		webSocketServer.run();
 				} catch (Exception e) {
-					Logger.error("Badness:", e);
+					CreeperContext.getInstance().error("Badness:", e);
 				}
 	        }
 	    }).start();
 	}
 	
 	/**
-	 * Registers the VM with the native Video and Voice Engines and pokes libjingle 
-	 * to enumerate the available video and audio codecs. If this succeeds, we can be
-	 * reasonably confident that the system is set up correctly
+	 * Hide the scrolling log and display the scary creeper instead
+	 */
+	public void onConnectionEstablished() {
+		logString.post(new Runnable() {
+			public void run() {
+				logString.setVisibility(View.INVISIBLE);
+				creeperImgView.setVisibility(View.VISIBLE);
+			}
+		});
+	}
+	
+	/**
+	 * Registers the VM with the native Video and Voice Engines
 	 */
 	private void pokeWebRTC() {
-	    Logger.info("Initializing WebRTC...");
-	    Logger.dieUnless(PeerConnectionFactory.initializeAndroidGlobals(this), "Failed to initializeAndroidGlobals!");
-	    PeerConnectionFactory factory = new PeerConnectionFactory();
+	    CreeperContext.getInstance().info("Initializing WebRTC...");
+	    CreeperContext.getInstance().dieUnless(PeerConnectionFactory.initializeAndroidGlobals(this), "Failed to initializeAndroidGlobals!");
+/*	    PeerConnectionFactory factory = new PeerConnectionFactory();
 	    factory.dispose();
-	    Logger.info("WebRTC seems to be ready to go!");
+*/	    CreeperContext.getInstance().info("WebRTC seems to be ready to go!");
 	}
 
 	

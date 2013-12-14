@@ -3,7 +3,8 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="gen"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
-	<classpathentry exported="true" kind="lib" path="libs/libjingle_peerconnection.jar"/>
+	<classpathentry kind="lib" path="libs/libjingle_peerconnection.jar" sourcepath="/home/val/webrtc/trunk/talk/app/webrtc/java/src"/>
+	<classpathentry kind="lib" path="libs/netty-all-4.0.12.Final.jar" sourcepath="libs_src/netty-all-4.0.12.Final-sources.jar"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry exported="true" kind="con" path="com.android.ide.eclipse.adt.DEPENDENCIES"/>
 	<classpathentry kind="output" path="bin/classes"/>

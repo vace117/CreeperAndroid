@@ -34,7 +34,7 @@ import java.net.URLDecoder;
 
 import org.apache.commons.io.IOUtils;
 
-import vace117.creeper.logging.Logger;
+import vace117.creeper.logging.CreeperContext;
 import android.app.Activity;
 
 /**
@@ -67,14 +67,14 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 		String uri = request.getUri();
 
 		if (uri.contains("websocket")) { // Not for us - let WebSocket handle this
-			Logger.info("Routing WebSocket request...");
+			CreeperContext.getInstance().info("Routing WebSocket request...");
 			ctx.fireChannelRead(request);
 		} else {
 			if (uri.length() < 2) {
 				uri = defaultFileName;
 			} 
 
-			Logger.info("Processing request for {}...", uri);
+			CreeperContext.getInstance().info("Processing request for {}...", uri);
 			try {
 				InputStream assetInputStream = readAsset(uri);
 				
@@ -82,7 +82,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 					sendError(ctx, NOT_FOUND, uri);
 				}
 				else {
-					Logger.info("Transmitting {}...", uri);
+					CreeperContext.getInstance().info("Transmitting {}...", uri);
 					
 					// We have our file as a sequential InputStream (it's being decompressed directly out of the apk - 
 					// the file is never decompressed fully into memory), but what we need to send our response with Netty 
@@ -117,7 +117,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 				}
 			} catch (IOException e) {
 				sendError(ctx, NOT_FOUND, uri);
-				Logger.error(e);
+				CreeperContext.getInstance().error(e);
 			}
 		
 
@@ -172,7 +172,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 		// Close the connection as soon as the error message is sent.
 		ctx.writeAndFlush(response).addListener(ChannelFutureListener.CLOSE);
 		
-		if (uri != null) Logger.warn("{} cannot be transmitted!", uri);
+		if (uri != null) CreeperContext.getInstance().warn("{} cannot be transmitted!", uri);
 	}
 
 	/**
