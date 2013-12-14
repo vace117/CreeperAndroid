@@ -27,7 +27,15 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.HttpRequestDecoder;
 import io.netty.handler.codec.http.HttpResponseEncoder;
-import vace117.creeper.logging.Logger;
+
+import java.net.InterfaceAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Set;
+
+import vace117.creeper.logging.CreeperContext;
 import vace117.creeper.webrtc.PeerConnectionManager;
 import android.app.Activity;
 
@@ -50,6 +58,7 @@ public class WebSocketServer {
     public WebSocketServer(int port, Activity mainActivity) {
         this.port = port;
         this.mainActivity = mainActivity;
+        
     }
     
     public void run() throws Exception {
@@ -69,10 +78,15 @@ public class WebSocketServer {
                         new WebSocketMessageHandler());
                 }
             });
-
+            
+            // Launch the socket listening thread
             final Channel ch = sb.bind(port).sync().channel();
-            Logger.info("Web server started on port {}", port);
+            CreeperContext.getInstance().info("Web server started on port {}", port);
+            
+            // Print connect info
+            printServerActiveInterfaces();
 
+            // Shutdown handler 
             ChannelFuture closeFuture = ch.closeFuture().sync();
             closeFuture.addListener(new ChannelFutureListener() {
 				@Override
@@ -82,11 +96,38 @@ public class WebSocketServer {
 			});
         }
         catch (Exception e) {
-        	Logger.error("Couldn't start Web Server!", e);
+        	CreeperContext.getInstance().error("Couldn't start Web Server!", e);
         }
         finally {
         	shutdown();
         }
+    }
+    
+    /**
+     * Enumerates all interfaces and collects all IP addresses that are up and have IPv4 addresses on them
+     * 
+     * @throws SocketException
+     */
+    private void printServerActiveInterfaces() throws SocketException {
+        Set<String> activeAddresses = new HashSet<String>();
+        Enumeration<NetworkInterface> allInterfaces = NetworkInterface.getNetworkInterfaces();
+        while ( allInterfaces.hasMoreElements() ) {
+        	NetworkInterface nif = allInterfaces.nextElement();
+        	if ( nif.isUp() && !nif.isVirtual() && !nif.isLoopback() ) {
+            	for ( InterfaceAddress addr : nif.getInterfaceAddresses() ) {
+            		String address = addr.getAddress().getHostAddress();
+            		if ( !address.contains(":") ) {
+            			activeAddresses.add(address);
+            		}
+            	}
+        	}
+        }
+        
+    	CreeperContext.getInstance().info("Creeper standing by. Command interface active at:");
+        for ( String addr : activeAddresses ) {
+        	CreeperContext.getInstance().info("   http://" + addr + ":8000");
+        }
+        
     }
     
     public void shutdown() {
@@ -96,7 +137,7 @@ public class WebSocketServer {
     }
 
     private final void shutdownPeerConnectionManager() {
-    	Logger.info("Shutting Down...");
+    	CreeperContext.getInstance().info("Shutting Down...");
     	
     	if ( PeerConnectionManager.isPeerConnectionManagerAvailable() ) {
     		PeerConnectionManager.getInstance().shutDown();
