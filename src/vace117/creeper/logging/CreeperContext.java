@@ -1,8 +1,15 @@
 package vace117.creeper.logging;
 
 import vace117.creeper.ui.BootstrapActivity;
+import vace117.creeper.ui.R;
 import android.util.Log;
+import android.widget.TextView;
 
+/**
+ * Context, logging, utilities, etc.
+ *
+ * @author Val Blant
+ */
 public class CreeperContext {
 	public final String TAG = "Creeper1";
 	public BootstrapActivity mainActivity;
@@ -70,10 +77,11 @@ public class CreeperContext {
 	}
 
 	public void updateLogString(final String msg) {
-		mainActivity.logString.post(new Runnable() {
+		final TextView logString = (TextView) mainActivity.getLogFragment().findViewById(R.id.logString); 
+		logString.post(new Runnable() {
 			@Override
 			public void run() {
-				mainActivity.logString.setText(mainActivity.logString.getText() + "\n" + msg);
+				logString.setText(logString.getText() + "\n" + msg);
 			}
 		});
 		
