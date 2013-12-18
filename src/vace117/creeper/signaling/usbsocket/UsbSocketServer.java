@@ -23,7 +23,7 @@ import android.app.Activity;
 public class UsbSocketServer extends AbstractSocketServer {
 	private static final int PORT = 4444;
 	
-	private UsbSocketServer(Activity mainActivity) {
+	public UsbSocketServer(Activity mainActivity) {
 		super(PORT, mainActivity);
 	}
 

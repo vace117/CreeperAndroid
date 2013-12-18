@@ -4,6 +4,7 @@ import org.webrtc.PeerConnectionFactory;
 
 import vace117.creeper.controller.raspberrypi.RaspberryPiController;
 import vace117.creeper.logging.CreeperContext;
+import vace117.creeper.signaling.usbsocket.UsbSocketServer;
 import vace117.creeper.signaling.websocket.WebSocketServer;
 import vace117.creeper.ui.ViewPagerAdapter.Tabs;
 import android.os.Bundle;
@@ -22,6 +23,7 @@ import android.view.WindowManager;
  */
 public class BootstrapActivity extends FragmentActivity {
 	private static WebSocketServer webSocketServer;
+	private static UsbSocketServer usbSocketServer;
 
     private ViewPager viewPager;
     private ViewPagerAdapter mAdapter;
@@ -51,6 +53,18 @@ public class BootstrapActivity extends FragmentActivity {
 
 	    // Check that WebRTC stuff is functional
 	    pokeWebRTC();
+
+	    // Run the USB Socket server
+		new Thread(new Runnable() {
+	        public void run() {
+	        	try {
+	        		usbSocketServer = new UsbSocketServer(BootstrapActivity.this);
+	        		usbSocketServer.run();
+				} catch (Exception e) {
+					CreeperContext.getInstance().error("Badness:", e);
+				}
+	        }
+	    }).start();
 
 	    // Run the WebServer
 		new Thread(new Runnable() {
