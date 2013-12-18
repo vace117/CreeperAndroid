@@ -1,4 +1,4 @@
-package vace117.creeper.signaling;
+package vace117.creeper.signaling.websocket;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;

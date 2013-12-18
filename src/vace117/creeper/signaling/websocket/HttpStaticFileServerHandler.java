@@ -1,4 +1,4 @@
-package vace117.creeper.signaling;
+package vace117.creeper.signaling.websocket;
 
 import static io.netty.handler.codec.http.HttpHeaders.isKeepAlive;
 import static io.netty.handler.codec.http.HttpHeaders.setContentLength;

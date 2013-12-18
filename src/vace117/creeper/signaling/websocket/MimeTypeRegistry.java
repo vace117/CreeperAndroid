@@ -1,4 +1,4 @@
-package vace117.creeper.signaling;
+package vace117.creeper.signaling.websocket;
 
 import java.util.HashMap;
 import java.util.Map;

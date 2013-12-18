@@ -2,8 +2,9 @@ package vace117.creeper.ui;
 
 import org.webrtc.PeerConnectionFactory;
 
+import vace117.creeper.controller.raspberrypi.RaspberryPiController;
 import vace117.creeper.logging.CreeperContext;
-import vace117.creeper.signaling.WebSocketServer;
+import vace117.creeper.signaling.websocket.WebSocketServer;
 import vace117.creeper.ui.ViewPagerAdapter.Tabs;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
@@ -20,8 +21,6 @@ import android.view.WindowManager;
  * @author Val Blant
  */
 public class BootstrapActivity extends FragmentActivity {
-	
-	private static final int PORT = 8000; 
 	private static WebSocketServer webSocketServer;
 
     private ViewPager viewPager;
@@ -45,6 +44,10 @@ public class BootstrapActivity extends FragmentActivity {
 	 */
 	void onLogFragmentReady() {
 	    CreeperContext.init(this);
+	    
+	    CreeperContext.getInstance().controller = new RaspberryPiController();
+	    
+	    
 
 	    // Check that WebRTC stuff is functional
 	    pokeWebRTC();
@@ -53,7 +56,7 @@ public class BootstrapActivity extends FragmentActivity {
 		new Thread(new Runnable() {
 	        public void run() {
 	        	try {
-	        		webSocketServer = new WebSocketServer(PORT, BootstrapActivity.this);
+	        		webSocketServer = new WebSocketServer(BootstrapActivity.this);
 	        		webSocketServer.run();
 				} catch (Exception e) {
 					CreeperContext.getInstance().error("Badness:", e);

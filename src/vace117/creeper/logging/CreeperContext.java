@@ -1,5 +1,6 @@
 package vace117.creeper.logging;
 
+import vace117.creeper.controller.BiDirectionalCreeperController;
 import vace117.creeper.ui.BootstrapActivity;
 import vace117.creeper.ui.R;
 import android.util.Log;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 public class CreeperContext {
 	public final String TAG = "Creeper1";
 	public BootstrapActivity mainActivity;
+	public BiDirectionalCreeperController controller;
 	private static CreeperContext instance;
 	
 	
@@ -28,6 +30,11 @@ public class CreeperContext {
 	
 	public static CreeperContext getInstance() {
 		return instance;
+	}
+
+	public synchronized void error(String msg) {
+		Log.e(TAG, msg);
+		updateLogString(msg);
 	}
 
 	public synchronized void error(String msg, Throwable e) {
