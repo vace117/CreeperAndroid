@@ -16,6 +16,7 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentRight="true"
         android:layout_alignParentTop="true"
-        android:src="@drawable/creeper1" />
+        android:src="@drawable/creeper1" 
+        android:contentDescription="@string/scary_creeper"/>
 
 </RelativeLayout>

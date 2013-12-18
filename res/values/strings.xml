@@ -4,5 +4,6 @@
     <string name="app_name">Creeper1</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
-
+    <string name="scary_creeper">Scary Creeper</string>
+    
 </resources>
