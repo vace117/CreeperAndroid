@@ -2,7 +2,7 @@ package vace117.creeper.ui;
 
 import org.webrtc.PeerConnectionFactory;
 
-import vace117.creeper.controller.raspberrypi.RaspberryPiController;
+import vace117.creeper.controller.mock.MockDroneController;
 import vace117.creeper.logging.CreeperContext;
 import vace117.creeper.signaling.usbsocket.UsbSocketServer;
 import vace117.creeper.signaling.websocket.WebSocketServer;
@@ -47,10 +47,8 @@ public class BootstrapActivity extends FragmentActivity {
 	void onLogFragmentReady() {
 	    CreeperContext.init(this);
 	    
-	    CreeperContext.getInstance().controller = new RaspberryPiController();
+	    CreeperContext.getInstance().controller = new MockDroneController();
 	    
-	    
-
 	    // Check that WebRTC stuff is functional
 	    pokeWebRTC();
 

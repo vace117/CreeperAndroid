@@ -1,5 +1,6 @@
 package vace117.creeper.logging;
 
+import io.netty.channel.ChannelHandlerContext;
 import vace117.creeper.controller.BiDirectionalCreeperController;
 import vace117.creeper.ui.BootstrapActivity;
 import vace117.creeper.ui.R;
@@ -15,6 +16,8 @@ public class CreeperContext {
 	public final String TAG = "Creeper1";
 	public BootstrapActivity mainActivity;
 	public BiDirectionalCreeperController controller;
+	public ChannelHandlerContext webSocketContext;
+	
 	private static CreeperContext instance;
 	
 	
@@ -32,32 +35,38 @@ public class CreeperContext {
 		return instance;
 	}
 
-	public synchronized void error(String msg) {
+	public void error(String msg) {
 		Log.e(TAG, msg);
 		updateLogString(msg);
 	}
 
-	public synchronized void error(String msg, Throwable e) {
+	public void error(String msg, Throwable e) {
 		Log.e(TAG, msg, e);
 		updateLogString(msg);
 	}
 
-	public synchronized void error(Throwable e) {
+	public void error(Throwable e) {
 		Log.e(TAG, "Exception:", e);
 	}
 
-	public synchronized void info(String msg) {
+	public void info(String msg) {
 		Log.i(TAG, doReplacements(msg, new Object[] {}));
 		updateLogString(msg);
 	}
 
-	public synchronized void info(String msg, Object... replacementArgs) {
+	public void info(String msg, Object... replacementArgs) {
 		String m = doReplacements(msg, replacementArgs);
 		Log.i(TAG, m);
 		updateLogString(m);
 	}
+	
+	public void info_console(String msg, Object... replacementArgs) {
+		String m = doReplacements(msg, replacementArgs);
+		Log.i(TAG, m);
+	}
 
-	public synchronized void warn(String msg, Object... replacementArgs) {
+
+	public void warn(String msg, Object... replacementArgs) {
 		String m = doReplacements(msg, replacementArgs);
 		Log.w(TAG, m);
 		updateLogString(m);
@@ -75,7 +84,7 @@ public class CreeperContext {
 		return processedString;
 	}
 
-	public synchronized void dieUnless(boolean condition, String msg) {
+	public void dieUnless(boolean condition, String msg) {
 		if (!condition) {
 			RuntimeException ex = new RuntimeException(msg);
 			CreeperContext.getInstance().error("I am dyiiiing!", ex);

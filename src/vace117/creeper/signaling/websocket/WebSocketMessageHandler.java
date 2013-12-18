@@ -24,6 +24,9 @@ import org.json.simple.parser.JSONParser;
 import org.webrtc.IceCandidate;
 import org.webrtc.SessionDescription;
 
+import vace117.creeper.controller.command.CreeperCommand;
+import vace117.creeper.controller.command.CreeperCommandType;
+import vace117.creeper.logging.CreeperContext;
 import vace117.creeper.webrtc.PeerConnectionManager;
 
 public class WebSocketMessageHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
@@ -35,24 +38,30 @@ public class WebSocketMessageHandler extends SimpleChannelInboundHandler<TextWeb
         
         if ( envelope.keySet().size() == 1 ) {
         	String key = (String) envelope.keySet().iterator().next();
-    		JSONObject json = (JSONObject) envelope.get(key);
-
-    		if ( "sdpAnswer".equals(key) ) {
-        		SessionDescription answer = new SessionDescription(
-                		SessionDescription.Type.fromCanonicalForm(json.get("type").toString()), 
-                		json.get("sdp").toString());
-                
-                PeerConnectionManager.getInstance().setRemoteDescription(answer);
+        	if ( envelope.get(key) instanceof JSONObject ) {
+	    		JSONObject json = (JSONObject) envelope.get(key);
+	
+	    		if ( "sdpAnswer".equals(key) ) {
+	        		SessionDescription answer = new SessionDescription(
+	                		SessionDescription.Type.fromCanonicalForm(json.get("type").toString()), 
+	                		json.get("sdp").toString());
+	                
+	                PeerConnectionManager.getInstance().setRemoteDescription(answer);
+	        	}
+	        	else if ( "ice".equals(key) ) {
+	                IceCandidate candidate = new IceCandidate(
+	                        json.get("sdpMid").toString(),
+	                        Integer.valueOf(json.get("sdpMLineIndex").toString()),
+	                        json.get("candidate").toString());
+	                
+	                PeerConnectionManager.getInstance().addRemoteIceCandidate(candidate);
+	        	}
         	}
-        	else if ( "ice".equals(key) ) {
-                IceCandidate candidate = new IceCandidate(
-                        json.get("sdpMid").toString(),
-                        Integer.valueOf(json.get("sdpMLineIndex").toString()),
-                        json.get("candidate").toString());
-                
-                PeerConnectionManager.getInstance().addRemoteIceCandidate(candidate);
+        	else if ( "command".equals(key) ) {
+        		String commandString = envelope.get(key).toString();
+        		
+        		CreeperContext.getInstance().controller.dispatchToPi(new CreeperCommand(CreeperCommandType.getCommand(commandString)));
         	}
-        }
-        
+        }        
     }
 }

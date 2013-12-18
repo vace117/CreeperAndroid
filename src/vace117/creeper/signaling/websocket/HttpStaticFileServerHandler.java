@@ -66,7 +66,7 @@ public class HttpStaticFileServerHandler extends SimpleChannelInboundHandler<Ful
 
 		String uri = request.getUri();
 
-		if (uri.contains("websocket")) { // Not for us - let WebSocket handle this
+		if (uri.endsWith("websocket")) { // Not for us - let WebSocket handle this
 			CreeperContext.getInstance().info("Routing WebSocket request...");
 			ctx.fireChannelRead(request);
 		} else {

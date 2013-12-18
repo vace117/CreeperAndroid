@@ -19,6 +19,7 @@ public class WebSocketConnectionObserver extends WebSocketServerProtocolHandler 
 		super.userEventTriggered(ctx, evt);
 		
 		if ( WebSocketServerProtocolHandler.ServerHandshakeStateEvent.HANDSHAKE_COMPLETE == evt ) {
+			CreeperContext.getInstance().webSocketContext = ctx;
 			PeerConnectionManager.getInstance(ctx).createOffer();
 		}
 	}

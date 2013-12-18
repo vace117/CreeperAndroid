@@ -3,14 +3,30 @@
         <title>Creeper Command</title>
         
         <link rel="stylesheet" href="web/creeper.css">
-        <script src="web/jquery-2.0.3.js"></script>
-        <script src="web/creeper.js"></script>
+        <script src="web/jquery-2.0.3.js" ></script>
+        <script src="web/utils.js"></script>
+        <script src="web/websocket.js"></script>
+        <script src="web/webrtc.js"></script>
+        <script src="web/control_commands.js"></script>
+        <script src="web/main.js"></script>
+        
+        
+        
+<!--         
+        <script src="web/webrtc.js"></script>
+        <script src="web/control_commands.js"></script>
+ -->        
     </head>
     
     <body>
-        <p id="responseText">Loading...</p>
-        <div class="center">
-        	<video id="remoteVideo" autoplay></video>
-        </div>
+    	<section id="video-player">
+	        <div class="center">
+	        	<video id="remoteVideo" autoplay></video>
+	        </div>
+    	</section>
+    	<section id="log-viewer">
+    		<h1>Log</h1>
+    		<div id="logLines"></div>
+    	</section>
     </body>
 </html>
