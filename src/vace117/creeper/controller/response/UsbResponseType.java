@@ -2,7 +2,10 @@ package vace117.creeper.controller.response;
 
 public enum UsbResponseType {
 	CREEPER_READY, 
-	STATUS_MSG;
+	STATUS_MSG,
+	WHEEL_ANGLE,
+	AZIMUTH,
+	INCLINATION;
 	
 	public static UsbResponseType getResponseType(String fromUsbSocket) {
 		for ( UsbResponseType responseType : values() ) {

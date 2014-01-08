@@ -1,6 +1,9 @@
 package vace117.creeper.logging;
 
+import org.json.simple.JSONObject;
+
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import vace117.creeper.controller.BiDirectionalCreeperController;
 import vace117.creeper.ui.BootstrapActivity;
 import vace117.creeper.ui.R;
@@ -17,6 +20,7 @@ public class CreeperContext {
 	public BootstrapActivity mainActivity;
 	public BiDirectionalCreeperController controller;
 	public ChannelHandlerContext webSocketContext;
+	public ChannelHandlerContext usbSocketContext;
 	
 	private static CreeperContext instance;
 	
@@ -100,6 +104,13 @@ public class CreeperContext {
 				logString.setText(logString.getText() + "\n" + msg);
 			}
 		});
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void sendStatusMessageToBrowser(String message) {
+		JSONObject envelope = new JSONObject();
+		envelope.put("statusMsg", message);
 		
+		webSocketContext.channel().writeAndFlush( new TextWebSocketFrame(envelope.toString()) );
 	}
 }

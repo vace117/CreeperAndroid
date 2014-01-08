@@ -16,7 +16,7 @@ public class UsbCommandEncoder extends MessageToMessageEncoder<CreeperCommand> {
 
 	@Override
 	protected void encode(ChannelHandlerContext ctx, CreeperCommand msg, List<Object> out) throws Exception {
-		out.add(msg.toString());
+		out.add(msg.toString() + "\n");
 	}
 
 

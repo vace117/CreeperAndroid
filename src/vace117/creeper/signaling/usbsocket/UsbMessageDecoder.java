@@ -36,6 +36,8 @@ public class UsbMessageDecoder extends MessageToMessageDecoder<String> {
 		String msgText = msg.substring(delimPosition + 1);
 		
 		try {
+			CreeperContext.getInstance().usbSocketContext = ctx;
+			
 			UsbResponse usbResponse = new UsbResponse(UsbResponseType.getResponseType(msgTypeStr), msgText);
 			controller.onUsbMessageReceived(usbResponse);
 		} catch (IllegalArgumentException e) {
