@@ -23,10 +23,14 @@ if (!window.Creeper) { window.Creeper = {}; }
 				68: "LOOK_RIGHT", 	// d
 				87: "LOOK_DOWN", 	// w
 				83: "LOOK_UP", 		// s
-				0: "LOOK_CENTER" 
+				67: "LOOK_CENTER"   // c 
 		};
 		
-		$(document).keydown( creeper.bindThis(this.keyHandler, this) );
+		// Register key handler functions
+		//
+		this.held_down_keys = {}; // Map of currently held down keys
+		$(document).keydown( creeper.bindThis(this.keyDownHandler, this) );
+		$(document).keyup( creeper.bindThis(this.keyUpHandler, this) );
 		trace("Registered key press listener.");
 		
 		// Register ourselves as a listener to WebSocket messages
@@ -35,27 +39,52 @@ if (!window.Creeper) { window.Creeper = {}; }
 	}
 	
 	/**
-	 * Key press handler. Dispatches commands based on the COMMANDS map.
+	 * Key Down handler. Adds the pressed down key to the list and triggers command transmission
 	 */
-	creeper.CreeperCommandAndControl.prototype.keyHandler = function(e) {
+	creeper.CreeperCommandAndControl.prototype.keyDownHandler = function(e) {
 		for (var keyCode in this.COMMANDS ) {
 			if ( e.which == keyCode ) {
 				e.preventDefault();
-				this.sendCommand(this.COMMANDS[keyCode]);
+				this.held_down_keys[e.which] = true;
+				this.sendCommands();
 				return;
 			}
 		}
 	}
-	
+
+	/**
+	 * Key Up handler. Deletes the released key from the list and triggers command transmission
+	 */
+	creeper.CreeperCommandAndControl.prototype.keyUpHandler = function(e) {
+		for (var keyCode in this.COMMANDS ) {
+			if ( e.which == keyCode ) {
+				e.preventDefault();
+			    delete this.held_down_keys[e.which];
+				this.sendCommands();
+				return;
+			}
+		}
+	}
+
 	/**
 	 * Transmits the selected command over the websocket
 	 */
-	creeper.CreeperCommandAndControl.prototype.sendCommand = function(command) {
-		trace("Browser Says: " + command);
+	creeper.CreeperCommandAndControl.prototype.sendCommands = function() {
+		var commandStrings = "";
+		for (var keyCode in this.held_down_keys ) {
+			var command = this.COMMANDS[keyCode];
+			commandStrings += command + ", "; 
+			
+			this.webSocket.send(JSON.stringify({
+				'command' : command
+			}));
+		}
 		
-		this.webSocket.send(JSON.stringify({
-			'command' : command
-		}));
+		if ( commandStrings.length > 0 ) {
+			trace("Browser Says: " + commandStrings);
+		}
+		
+
 	}
 	
 	/**
