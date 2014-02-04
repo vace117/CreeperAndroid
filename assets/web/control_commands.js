@@ -23,7 +23,15 @@ if (!window.Creeper) { window.Creeper = {}; }
 				68: "LOOK_RIGHT", 	// d
 				87: "LOOK_DOWN", 	// w
 				83: "LOOK_UP", 		// s
-				67: "LOOK_CENTER"   // c 
+				67: "LOOK_CENTER",  // c
+				
+				38: "ACCELERATE",	// UP Arrow
+				40: "REVERSE_ACCELERATE",	// DOWN Arrow
+				32: "STOP",			// Space
+				
+				37: "WHEELS_LEFT",	// LEFT Arrow
+				39: "WHEELS_RIGHT",	// RIGHT Arrow
+				
 		};
 		
 		// Register key handler functions
@@ -97,7 +105,7 @@ if (!window.Creeper) { window.Creeper = {}; }
 		if (message.statusMsg) {
 			
 			trace("Creeper Says: " + message.statusMsg);
-			creeper.log("CREEPER SAYS: " + message.statusMsg);
+			creeper.log(message.statusMsg);
 			
 			return true;
 		}

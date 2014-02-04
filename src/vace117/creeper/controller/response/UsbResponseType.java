@@ -5,7 +5,8 @@ public enum UsbResponseType {
 	STATUS_MSG,
 	WHEEL_ANGLE,
 	AZIMUTH,
-	INCLINATION;
+	INCLINATION,
+	REAR_MOTOR,;
 	
 	public static UsbResponseType getResponseType(String fromUsbSocket) {
 		for ( UsbResponseType responseType : values() ) {

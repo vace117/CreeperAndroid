@@ -26,7 +26,7 @@ public class RaspberryPiController implements BiDirectionalCreeperController {
 			ctx.channel().writeAndFlush(msg);
 		}
 		else {
-			CreeperContext.getInstance().info_console("Cannot send command to Raspberry Pi, b/c we have not yet received a CREEPER_READY message.");
+			CreeperContext.getInstance().info("Cannot send command to Raspberry Pi, b/c we have not yet received a CREEPER_READY message.");
 		}
 	}
 
