@@ -24,7 +24,7 @@ public class PeerConnectionManager {
 	/**
 	 * Set to true to send an audio track
 	 */
-	private static final boolean ENABLE_AUDIO = false;
+	private static final boolean ENABLE_AUDIO = true;
 	
 	
 	

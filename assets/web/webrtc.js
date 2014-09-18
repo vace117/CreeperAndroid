@@ -71,14 +71,56 @@ if (!window.Creeper) { window.Creeper = {}; }
 	 * Callback for when our SDP answer is ready to be sent out
 	 */
 	creeper.VideoManager.prototype.gotRemoteDescription = function(answer) {
-		this.peerConnection.setLocalDescription(answer);
+		answer.sdp = this.forceISACAudioCodec(answer.sdp);
 		trace("Browser's Answer: \n" + answer.sdp);
+		this.peerConnection.setLocalDescription(answer);
 
 		this.webSocket.send(JSON.stringify({
 			'sdpAnswer' : answer
 		}));
 	}
+	
+	/**
+	 * It is necessary to modify our SDP answer in order to ensure that ISAC audio codec is used,
+	 * instead of the default Opus codec, which requires 48kHz audio. Ansroid can only provide 16kHz audio, 
+	 * so we must remove Opus from the list of options and select the next best thing, which is ISAC/16000.  
+	 */
+	creeper.VideoManager.prototype.forceISACAudioCodec = function(sdp) {
+		var myRegexp = /a=rtpmap:(.*?) ISAC\/16000/g; // Get the id for ISAC codec
+		var matches = myRegexp.exec(sdp);
 		
+		if ( matches === null ) {
+			trace("ERROR! No ISAC/16000 audio codec available. You have to pick something else, since Opus doesn't work!");
+		}
+ 		else {
+ 			var isacId = matches[1];
+			var sdpLines = sdp.split('\r\n');
+
+			myRegexp = /a=rtpmap:(.*?) opus\/48000/g; // Get the id for opus
+			matches = myRegexp.exec(sdp);
+			
+			if ( matches !== null ) {
+				var opusId = matches[1];
+			}
+
+			for ( var i = 0; i < sdpLines.length; i++) {
+				if (sdpLines[i].search('m=audio') !== -1) {
+					var tokens = sdpLines[i].split(' ');
+					// Change the audio line to specify only the ISAC id
+					sdpLines[i] = tokens[0].concat(" ", tokens[1], " ", tokens[2], " ", isacId);
+				}
+				
+				// Remove all lines that reference opus
+				if ( opusId !== null && sdpLines[i].search(":".concat(opusId)) !== -1 ) {
+					sdpLines.splice(i--, 1); // Delete array element and adjust iteration index
+				}
+			}
+		}
+		
+		sdp = sdpLines.join('\r\n');
+		return sdp;
+	};
+	
 	/**
 	 * Callback for when a local ICE candidate is ready to be sent out
 	 */
