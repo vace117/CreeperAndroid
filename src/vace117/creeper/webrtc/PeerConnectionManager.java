@@ -125,7 +125,7 @@ public class PeerConnectionManager {
         // We don't want to receive anything
 		MediaConstraints sdpConstraints = new MediaConstraints();
 		sdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair(
-				"OfferToReceiveAudio", "false"));
+				"OfferToReceiveAudio", "true"));
 		sdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair(
 				"OfferToReceiveVideo", "false"));
 

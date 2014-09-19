@@ -12,24 +12,45 @@ if (!window.Creeper) { window.Creeper = {}; }
 	creeper.VideoManager = function(webSocket) {
 		this.webSocket = webSocket;
 		
-		// The actual media channels sent are controlled on the Java side
-		this.sdpConstraints = {
-				'mandatory' : {
-					'OfferToReceiveAudio' : true,
-					'OfferToReceiveVideo' : true
-				}
-			};
-		
 		this.peerConnection = new webkitRTCPeerConnection(null);
 		
 		// Callback for when remote info arrives
 		this.peerConnection.onaddstream = creeper.bindThis(this.gotRemoteStream, this);
 		this.peerConnection.onicecandidate = creeper.bindThis(this.gotIceCandidate, this);
 		
+		
 		// Register ourselves as a listener to WebSocket messages
 		webSocket.registerMessageListener( creeper.bindThis(this.onWebSocketMessage, this) );
 	}
 	
+	creeper.VideoManager.prototype.onMediaSuccess = function(mediaStream) {
+		this.peerConnection.addStream(mediaStream);
+		trace("Added browser's media stream to peerConnection.");
+		
+		// Register the remote offer
+		var sdpOffer = new RTCSessionDescription(this.sdpOffer);
+		trace("Java Offer: \n" + sdpOffer.sdp);
+		this.peerConnection.setRemoteDescription(sdpOffer);
+		
+		// Create our answer
+		var sdpConstraints = {
+				'mandatory' : {
+					'OfferToReceiveAudio' : true,
+					'OfferToReceiveVideo' : true
+				}
+		};
+		
+		this.peerConnection.createAnswer(
+				creeper.bindThis(this.gotRemoteDescription, this),
+				creeper.bindThis(this.onCreateSessionDescriptionError, this),
+				sdpConstraints);
+		
+	}
+
+	creeper.VideoManager.prototype.onMediaError = function(error) {
+		trace("Could not get media stream from the browser: " + error.toString());
+	}
+
 	/**
 	 * Knows how to process an incoming SDP Offer or incoming ICE candidates.
 	 * 
@@ -38,14 +59,15 @@ if (!window.Creeper) { window.Creeper = {}; }
 	creeper.VideoManager.prototype.onWebSocketMessage = function(event) {
 		var message = JSON.parse(event.data);
 		if (message.offer) {
-			var sdpOffer = new RTCSessionDescription(message.offer);
-
-			trace("Java Offer: \n" + sdpOffer.sdp);
-			this.peerConnection.setRemoteDescription(sdpOffer);
-			this.peerConnection.createAnswer(
-					creeper.bindThis(this.gotRemoteDescription, this),
-					creeper.bindThis(this.onCreateSessionDescriptionError, this),
-					this.sdpConstraints);
+			
+			this.sdpOffer = message.offer;
+			
+			navigator.webkitGetUserMedia({video:false, audio:true}, 
+					creeper.bindThis(this.onMediaSuccess, this), 
+					creeper.bindThis(this.onMediaError, this));
+			
+			
+			
 			
 			return true;
 		} else if (message.ice) {

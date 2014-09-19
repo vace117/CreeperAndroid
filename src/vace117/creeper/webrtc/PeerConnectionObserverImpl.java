@@ -56,7 +56,9 @@ public class PeerConnectionObserverImpl implements PeerConnection.Observer {
 
 	@Override
 	public void onAddStream(MediaStream stream) {
-		throw new UnsupportedOperationException("We should not be adding a remote stream on the local PeerConnection!");
+		//throw new UnsupportedOperationException("We should not be adding a remote stream on the local PeerConnection!");
+		
+		CreeperContext.getInstance().info("Received a MediaStream from the browser: {}", stream);
 	}
 
 
