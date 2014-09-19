@@ -15,7 +15,7 @@ import org.webrtc.PeerConnection.SignalingState;
 import vace117.creeper.logging.CreeperContext;
 
 /**
- * Sends locally detected ICE candidates to the browser via the WebSocket
+ * Sends locally detected ICE candidates to the browser via the WebSocket, as well as handling some logging of connection states.
  * 
  * @author Val Blant
  */
@@ -27,6 +27,9 @@ public class PeerConnectionObserverImpl implements PeerConnection.Observer {
 		this.webSocketContext = webSocketContext;
 	}
 
+	/**
+	 * Called when we need to share a ICE candidate
+	 */
 	@Override
 	public void onIceCandidate(IceCandidate candidate) {
 		sendIceCandidateToBrowser(candidate);
@@ -54,10 +57,11 @@ public class PeerConnectionObserverImpl implements PeerConnection.Observer {
 		throw new RuntimeException("PeerConnection error!");
 	}
 
+	/**
+	 * This is called when a stream from the browser has been added to our PeerConnection
+	 */
 	@Override
 	public void onAddStream(MediaStream stream) {
-		//throw new UnsupportedOperationException("We should not be adding a remote stream on the local PeerConnection!");
-		
 		CreeperContext.getInstance().info("Received a MediaStream from the browser: {}", stream);
 	}
 

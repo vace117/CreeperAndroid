@@ -19,6 +19,11 @@ import org.webrtc.VideoTrack;
 
 import vace117.creeper.logging.CreeperContext;
 
+/**
+ * WebRTC session is handled by this class
+ *
+ * @author Val Blant
+ */
 public class PeerConnectionManager {
 	
 	/**
@@ -122,15 +127,14 @@ public class PeerConnectionManager {
 		destroyPeerConnection();
 		initPeerConnection();
         
-        // We don't want to receive anything
 		MediaConstraints sdpConstraints = new MediaConstraints();
 		sdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair(
-				"OfferToReceiveAudio", "true"));
+				"OfferToReceiveAudio", "true")); // Get the audio from the browser
 		sdpConstraints.mandatory.add(new MediaConstraints.KeyValuePair(
-				"OfferToReceiveVideo", "false"));
+				"OfferToReceiveVideo", "false")); // We do not need video from the browser
 
+		// Make an SDP Offer
 		CreeperContext.getInstance().info("Creating an Offer...");
-		// Get the Offer SDP
 		SdpObserverImpl sdpOfferObserver = new SdpObserverImpl();
 		peerConnection.createOffer(sdpOfferObserver, sdpConstraints);
 		SessionDescription offerSdp = sdpOfferObserver.getSdp();

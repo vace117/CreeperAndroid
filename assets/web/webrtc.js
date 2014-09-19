@@ -14,7 +14,7 @@ if (!window.Creeper) { window.Creeper = {}; }
 		
 		this.peerConnection = new webkitRTCPeerConnection(null);
 		
-		// Callback for when remote info arrives
+		// Callbacks for when remote info arrives
 		this.peerConnection.onaddstream = creeper.bindThis(this.gotRemoteStream, this);
 		this.peerConnection.onicecandidate = creeper.bindThis(this.gotIceCandidate, this);
 		
@@ -23,30 +23,23 @@ if (!window.Creeper) { window.Creeper = {}; }
 		webSocket.registerMessageListener( creeper.bindThis(this.onWebSocketMessage, this) );
 	}
 	
+	/**
+	 * Callback for when we have obtained the browser's media stream
+	 */
 	creeper.VideoManager.prototype.onMediaSuccess = function(mediaStream) {
 		this.peerConnection.addStream(mediaStream);
 		trace("Added browser's media stream to peerConnection.");
-		
-		// Register the remote offer
-		var sdpOffer = new RTCSessionDescription(this.sdpOffer);
-		trace("Java Offer: \n" + sdpOffer.sdp);
-		this.peerConnection.setRemoteDescription(sdpOffer);
-		
-		// Create our answer
-		var sdpConstraints = {
-				'mandatory' : {
-					'OfferToReceiveAudio' : true,
-					'OfferToReceiveVideo' : true
-				}
-		};
-		
+
+		// Create an SDP Answer
 		this.peerConnection.createAnswer(
 				creeper.bindThis(this.gotRemoteDescription, this),
 				creeper.bindThis(this.onCreateSessionDescriptionError, this),
-				sdpConstraints);
-		
+				this.sdpConstraints);			
 	}
 
+	/**
+	 * Error calllback used when there was a problem obtaining browser's media stream
+	 */
 	creeper.VideoManager.prototype.onMediaError = function(error) {
 		trace("Could not get media stream from the browser: " + error.toString());
 	}
@@ -60,15 +53,17 @@ if (!window.Creeper) { window.Creeper = {}; }
 		var message = JSON.parse(event.data);
 		if (message.offer) {
 			
-			this.sdpOffer = message.offer;
-			
-			navigator.webkitGetUserMedia({video:false, audio:true}, 
+			// Get the browser's audio stream from a microphone 
+			navigator.webkitGetUserMedia(
+					{video:false, audio:true}, 
 					creeper.bindThis(this.onMediaSuccess, this), 
 					creeper.bindThis(this.onMediaError, this));
 			
-			
-			
-			
+			var sdpOffer = new RTCSessionDescription(message.offer);
+
+			trace("Java Offer: \n" + sdpOffer.sdp);
+			this.peerConnection.setRemoteDescription(sdpOffer);
+
 			return true;
 		} else if (message.ice) {
 			var remoteIceCandidate = new RTCIceCandidate(message.ice);
