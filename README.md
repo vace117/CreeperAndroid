@@ -9,5 +9,5 @@ This Android app starts a web server on port 8000 and awaits a connection from a
 
 Once Android is ready to send an SDP offer, it is forwarded to the browser via a WebSocket on which the page is listening. The served javascript code handles local WebRTC setup inside the browser, and uses the WebSocket to send the SDP answer.
 
-For more details about the design and architecture, please refer to this Instructible:
-<COMING SOON!>
+For more details about the design and architecture, please refer to this Instructible: http://www.instructables.com/id/WebRTC-Creeper-Drone-Browser-Controlled-RC-Car/
+
